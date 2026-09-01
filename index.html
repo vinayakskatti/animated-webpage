@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS '26 - The Next-Gen Fest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.8.0/dist/vanilla-tilt.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0A0A0C;
+            color: #FFFFFF;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, #FF4B2B, #A855F7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Glow Effect */
+        .glow {
+            box-shadow: 0 0 20px rgba(255, 75, 43, 0.5);
+        }
+
+        .glow-text {
+            text-shadow: 0 0 10px rgba(255, 75, 43, 0.6);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        /* Hero Canvas */
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hero-section {
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Tilt Card */
+        .tilt-card {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+
+        /* Scroll trigger animations */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(60px);
+        }
+
+        /* CTA Button */
+        .cta-button {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #FF4B2B, #A855F7);
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            color: white;
+        }
+
+        .cta-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 75, 43, 0.8);
+        }
+
+        .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: left 0.5s ease;
+        }
+
+        .cta-button:hover::before {
+            left: 100%;
+        }
+
+        /* Tab Animation */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Countdown Timer */
+        .countdown-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .countdown-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #FF4B2B, #A855F7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Floating Animation */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Pulse Animation */
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(255, 75, 43, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(255, 75, 43, 0.8);
+            }
+        }
+
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        /* Grid Background Animation */
+        .grid-background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(255, 75, 43, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 75, 43, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
+        }
+
+        @keyframes moveGrid {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="glass">
+        <div class="flex justify-between items-center px-8 py-4">
+            <div class="text-2xl font-bold gradient-text">NEXUS '26</div>
+            <div class="hidden md:flex gap-8">
+                <a href="#overview" class="hover:text-orange-500 transition">Overview</a>
+                <a href="#schedule" class="hover:text-orange-500 transition">Schedule</a>
+                <a href="#competitions" class="hover:text-orange-500 transition">Competitions</a>
+            </div>
+            <button class="cta-button">REGISTER NOW</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+        <div class="grid-background"></div>
+        <canvas id="particleCanvas"></canvas>
+        
+        <div class="relative z-10 text-center">
+            <!-- 3D Tilt Card -->
+            <div class="tilt-card mb-16 floating" data-tilt>
+                <div class="glass p-12 rounded-2xl w-80 h-80 flex items-center justify-center relative overflow-hidden glow">
+                    <div class="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-purple-500/20"></div>
+                    <div class="relative z-10 text-center">
+                        <div class="text-6xl mb-4">🏆</div>
+                        <h2 class="text-3xl font-bold gradient-text mb-2">NEXUS</h2>
+                        <p class="text-sm text-gray-300">The Next-Gen Festival</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hero Headline -->
+            <h1 class="text-7xl font-black mb-6 glow-text leading-tight">
+                NEXUS '26<br>
+                <span class="gradient-text">THE NEXT-GEN FEST</span>
+            </h1>
+            <p class="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
+                Experience the future of innovation, creativity, and collaboration. Where technology meets culture in an unforgettable celebration.
+            </p>
+            <button class="cta-button text-lg">EXPLORE EVENT</button>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section id="overview" class="py-24 px-8 relative z-10">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-5xl font-bold mb-16 gradient-text text-center">Event Highlights</h2>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1: Hackathon -->
+                <div class="fade-in-up glass p-8 rounded-2xl hover:glow transition-all duration-300 cursor-pointer group">
+                    <div class="text-5xl mb-4">💻</div>
+                    <h3 class="text-2xl font-bold mb-4 group-hover:gradient-text transition">Hackathon</h3>
+                    <p class="text-gray-300 mb-6">
+                        48-hour innovation sprint where developers collaborate to build groundbreaking solutions.
+                    </p>
+                    <div class="flex items-center gap-2 text-orange-500">
+                        <span>Learn more</span>
+                        <span class="group-hover:translate-x-2 transition">→</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: Cultural Gala -->
+                <div class="fade-in-up glass p-8 rounded-2xl hover:glow transition-all duration-300 cursor-pointer group">
+                    <div class="text-5xl mb-4">🎭</div>
+                    <h3 class="text-2xl font-bold mb-4 group-hover:gradient-text transition">Cultural Gala</h3>
+                    <p class="text-gray-300 mb-6">
+                        Celebrate diversity with performances, art installations, and cultural showcases from around the globe.
+                    </p>
+                    <div class="flex items-center gap-2 text-orange-500">
+                        <span>Learn more</span>
+                        <span class="group-hover:translate-x-2 transition">→</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Tech Expo -->
+                <div class="fade-in-up glass p-8 rounded-2xl hover:glow transition-all duration-300 cursor-pointer group">
+                    <div class="text-5xl mb-4">🚀</div>
+                    <h3 class="text-2xl font-bold mb-4 group-hover:gradient-text transition">Tech Expo</h3>
+                    <p class="text-gray-300 mb-6">
+                        Discover cutting-edge technologies, startups, and innovations shaping the future of industries.
+                    </p>
+                    <div class="flex items-center gap-2 text-orange-500">
+                        <span>Learn more</span>
+                        <span class="group-hover:translate-x-2 transition">→</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Schedule Section -->
+    <section id="schedule" class="py-24 px-8 relative z-10">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-5xl font-bold mb-16 gradient-text text-center">Event Schedule</h2>
+            
+            <!-- Tab Buttons -->
+            <div class="flex justify-center gap-4 mb-12 flex-wrap">
+                <button class="tab-btn glass px-8 py-3 rounded-full font-semibold active" data-tab="day1">
+                    Day 1
+                </button>
+                <button class="tab-btn glass px-8 py-3 rounded-full font-semibold" data-tab="day2">
+                    Day 2
+                </button>
+                <button class="tab-btn glass px-8 py-3 rounded-full font-semibold" data-tab="day3">
+                    Day 3
+                </button>
+            </div>
+
+            <!-- Day 1 Content -->
+            <div class="tab-content active" id="day1">
+                <div class="space-y-4">
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Opening Ceremony</h4>
+                            <p class="text-gray-400">Meet the keynote speakers and get inspired</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">09:00 AM</div>
+                    </div>
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Hackathon Kickoff</h4>
+                            <p class="text-gray-400">Teams begin their 48-hour journey</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">10:30 AM</div>
+                    </div>
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Tech Expo Opens</h4>
+                            <p class="text-gray-400">Explore innovative products and startups</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">02:00 PM</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 2 Content -->
+            <div class="tab-content" id="day2">
+                <div class="space-y-4">
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Workshops & Seminars</h4>
+                            <p class="text-gray-400">Learn from industry experts</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">09:00 AM</div>
+                    </div>
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Cultural Gala</h4>
+                            <p class="text-gray-400">Experience diverse performances and art</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">06:00 PM</div>
+                    </div>
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Networking Night</h4>
+                            <p class="text-gray-400">Connect with innovators and creators</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">08:00 PM</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day 3 Content -->
+            <div class="tab-content" id="day3">
+                <div class="space-y-4">
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Hackathon Finals</h4>
+                            <p class="text-gray-400">Teams present their innovative projects</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">10:00 AM</div>
+                    </div>
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Awards & Recognition</h4>
+                            <p class="text-gray-400">Celebrate the winners and achievements</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">02:00 PM</div>
+                    </div>
+                    <div class="glass p-6 rounded-xl flex justify-between items-center hover:bg-white/20 transition">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">Closing Ceremony</h4>
+                            <p class="text-gray-400">See you next year!</p>
+                        </div>
+                        <div class="text-orange-500 font-bold">05:00 PM</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Competitions Section -->
+    <section id="competitions" class="py-24 px-8 relative z-10">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-5xl font-bold mb-16 gradient-text text-center">Competitions</h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="fade-in-up glass p-8 rounded-2xl text-center hover:glow transition-all">
+                    <div class="text-4xl mb-4">⚡</div>
+                    <h3 class="text-xl font-bold mb-2">Hackathon</h3>
+                    <p class="text-gray-400 text-sm mb-4">Prize Pool: ₹5,00,000</p>
+                    <button class="cta-button text-sm w-full">Register</button>
+                </div>
+
+                <div class="fade-in-up glass p-8 rounded-2xl text-center hover:glow transition-all">
+                    <div class="text-4xl mb-4">🎨</div>
+                    <h3 class="text-xl font-bold mb-2">Design Sprint</h3>
+                    <p class="text-gray-400 text-sm mb-4">Prize Pool: ₹2,00,000</p>
+                    <button class="cta-button text-sm w-full">Register</button>
+                </div>
+
+                <div class="fade-in-up glass p-8 rounded-2xl text-center hover:glow transition-all">
+                    <div class="text-4xl mb-4">🎤</div>
+                    <h3 class="text-xl font-bold mb-2">Battle of Bands</h3>
+                    <p class="text-gray-400 text-sm mb-4">Prize Pool: ₹1,50,000</p>
+                    <button class="cta-button text-sm w-full">Register</button>
+                </div>
+
+                <div class="fade-in-up glass p-8 rounded-2xl text-center hover:glow transition-all">
+                    <div class="text-4xl mb-4">🏃</div>
+                    <h3 class="text-xl font-bold mb-2">Speedrun Challenge</h3>
+                    <p class="text-gray-400 text-sm mb-4">Prize Pool: ₹1,00,000</p>
+                    <button class="cta-button text-sm w-full">Register</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Countdown Timer Section -->
+    <section class="py-24 px-8 relative z-10 bg-gradient-to-b from-transparent via-orange-500/5 to-transparent">
+        <div class="max-w-7xl mx-auto text-center">
+            <h2 class="text-4xl font-bold mb-12 gradient-text">Event Countdown</h2>
+            
+            <div class="flex justify-center gap-8 flex-wrap">
+                <div class="countdown-item glass p-6 rounded-xl">
+                    <div class="countdown-number" id="days">00</div>
+                    <span class="text-gray-400">Days</span>
+                </div>
+                <div class="countdown-item glass p-6 rounded-xl">
+                    <div class="countdown-number" id="hours">00</div>
+                    <span class="text-gray-400">Hours</span>
+                </div>
+                <div class="countdown-item glass p-6 rounded-xl">
+                    <div class="countdown-number" id="minutes">00</div>
+                    <span class="text-gray-400">Minutes</span>
+                </div>
+                <div class="countdown-item glass p-6 rounded-xl">
+                    <div class="countdown-number" id="seconds">00</div>
+                    <span class="text-gray-400">Seconds</span>
+                </div>
+            </div>
+
+            <button class="cta-button text-lg mt-12">REGISTER NOW</button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 py-12 px-8 relative z-10 text-center text-gray-400">
+        <div class="max-w-7xl mx-auto">
+            <p class="mb-4">© 2026 NEXUS Festival. All rights reserved.</p>
+            <div class="flex justify-center gap-6 text-sm">
+                <a href="#" class="hover:text-orange-500 transition">Privacy Policy</a>
+                <a href="#" class="hover:text-orange-500 transition">Terms of Service</a>
+                <a href="#" class="hover:text-orange-500 transition">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Initialize Vanilla Tilt
+        VanillaTilt.init(document.querySelector(".tilt-card"), {
+            max: 25,
+            speed: 400,
+            scale: 1.05
+        });
+
+        // Scroll Trigger Animations for Cards
+        gsap.utils.toArray(".fade-in-up").forEach(element => {
+            gsap.to(element, {
+                scrollTrigger: {
+                    trigger: element,
+                    start: "top 80%",
+                    end: "top 50%",
+                    scrub: 0.5,
+                },
+                opacity: 1,
+                y: 0,
+                duration: 1
+            });
+        });
+
+        // Three.js Particle System
+        function initParticles() {
+            const canvas = document.getElementById('particleCanvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x000000, 0);
+            camera.position.z = 50;
+
+            // Create particles
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particleCount = 100;
+            const posArray = new Float32Array(particleCount * 3);
+
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                posArray[i] = (Math.random() - 0.5) * 100;
+                posArray[i + 1] = (Math.random() - 0.5) * 100;
+                posArray[i + 2] = (Math.random() - 0.5) * 100;
+            }
+
+            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.5,
+                color: '#FF4B2B',
+                sizeAttenuation: true
+            });
+
+            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particles);
+
+            // Mouse movement effect
+            let mouseX = 0;
+            let mouseY = 0;
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+            });
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+
+                particles.rotation.x += 0.0001;
+                particles.rotation.y += 0.0002;
+                particles.position.x = mouseX * 10;
+                particles.position.y = mouseY * 10;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Handle resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // Initialize particles on load
+        window.addEventListener('load', initParticles);
+
+        // Tab Functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                // Add active class to clicked tab
+                e.target.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+            });
+        });
+
+        // Countdown Timer
+        function updateCountdown() {
+            const eventDate = new Date('2026-03-15').getTime();
+            const now = new Date().getTime();
+            const distance = eventDate - now;
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            document.getElementById('days').textContent = String(days).padStart(2, '0');
+            document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+            document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
